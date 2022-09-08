@@ -52,6 +52,22 @@ impl<T: From<StrongPtr>> NSArray<T> {
     }
 }
 
+pub struct NSData {
+    pub p: StrongPtr,
+}
+
+impl NSData {
+    pub fn data_with_bytes(bytes: &[u8]) -> Self {
+        unsafe {
+            let p = StrongPtr::new(
+                msg_send![class!(NSData), dataWithBytes: bytes.as_ptr() length: bytes.len()]
+            );
+
+            NSData { p }
+        }
+    }
+}
+
 const UTF8_ENCODING: usize = 4;
 pub struct NSString(pub StrongPtr);
 
@@ -123,6 +139,13 @@ impl NSURL {
         unsafe {
             let p = StrongPtr::retain(msg_send![*self.0, absoluteURL]);
             NSURL(p)
+        }
+    }
+
+    pub fn absolute_string(&self) -> NSString {
+        unsafe {
+            let p = StrongPtr::retain(msg_send![*self.0, absoluteString]);
+            NSString(p)
         }
     }
 }

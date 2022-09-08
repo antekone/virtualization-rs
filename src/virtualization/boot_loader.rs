@@ -109,3 +109,25 @@ impl VZBootLoader for VZLinuxBootLoader {
         *self.0
     }
 }
+
+///  bootLoader for MacOS
+pub struct VZMacOSBootLoader(StrongPtr);
+
+impl VZMacOSBootLoader {
+    pub fn new() -> VZMacOSBootLoader {
+        unsafe {
+            Self(StrongPtr::new(msg_send![class!(VZMacOSBootLoader), new]))
+        }
+    }
+}
+
+impl VZBootLoader for VZMacOSBootLoader {
+    fn id(&self) -> Id {
+        *self.0
+    }
+}
+
+#[test]
+fn bootloader_macos_should_instantiate() {
+    let _ = VZMacOSBootLoader::new();
+}

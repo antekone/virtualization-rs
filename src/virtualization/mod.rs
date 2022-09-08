@@ -8,3 +8,8 @@ pub mod serial_port;
 pub mod socket_device;
 pub mod storage_device;
 pub mod virtual_machine;
+pub mod graphic_device;
+pub mod pointing_device;
+pub mod keyboard_device;
+pub mod sound_device;
+pub mod platform;

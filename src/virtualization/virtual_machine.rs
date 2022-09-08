@@ -16,6 +16,8 @@ use objc::runtime::BOOL;
 use objc::{class, msg_send, sel, sel_impl};
 use objc::{rc::StrongPtr, runtime::YES};
 
+use super::{platform::VZPlatformConfiguration, keyboard_device::VZKeyboardConfiguration, graphic_device::VZGraphicsDeviceConfiguration, pointing_device::VZPointingDeviceConfiguration};
+
 /// builder for VZVirtualMachineConfiguration
 /// # Examples
 /// ```rust
@@ -46,6 +48,11 @@ impl VZVirtualMachineConfigurationBuilder {
         self
     }
 
+    pub fn platform(mut self, platform: impl VZPlatformConfiguration) -> Self {
+        self.conf.set_platform(platform);
+        self
+    }
+
     pub fn cpu_count(mut self, cpu_count: usize) -> Self {
         self.conf.set_cpu_count(cpu_count);
         self
@@ -61,6 +68,30 @@ impl VZVirtualMachineConfigurationBuilder {
         entropy_devices: Vec<T>,
     ) -> Self {
         self.conf.set_entropy_devices(entropy_devices);
+        self
+    }
+
+    pub fn graphics_devices<T: VZGraphicsDeviceConfiguration>(
+        mut self,
+        devices: Vec<T>,
+    ) -> Self {
+        self.conf.set_graphics_devices(devices);
+        self
+    }
+
+    pub fn pointing_devices<T: VZPointingDeviceConfiguration>(
+        mut self,
+        devices: Vec<T>,
+    ) -> Self {
+        self.conf.set_pointing_devices(devices);
+        self
+    }
+
+    pub fn keyboard_devices<T: VZKeyboardConfiguration>(
+        mut self,
+        devices: Vec<T>,
+    ) -> Self {
+        self.conf.set_keyboards(devices);
         self
     }
 
@@ -103,6 +134,38 @@ impl VZVirtualMachineConfigurationBuilder {
 
     pub fn build(self) -> VZVirtualMachineConfiguration {
         self.conf
+    }
+}
+
+/// this structure is undocumented, but useful
+pub struct VZVirtualMachineStartOptions(StrongPtr);
+
+impl VZVirtualMachineStartOptions {
+    fn new() -> Self {
+        unsafe {
+            let obj = msg_send![class!(_VZVirtualMachineStartOptions), new];
+            Self(StrongPtr::new(obj))
+        }
+    }
+
+    fn set_boot_recovery(&mut self, flag: bool) {
+        unsafe { let _: () = msg_send![*self.0, setBootMacOSRecovery: flag]; }
+    }
+
+    fn set_panic_action(&mut self, flag: bool) {
+        unsafe { let _: () = msg_send![*self.0, setPanicAction: flag]; }
+    }
+
+    fn set_stop_in_iboot_stage_1(&mut self, flag: bool) {
+        unsafe { let _: () = msg_send![*self.0, setStopInIBootStage1: flag]; }
+    }
+
+    fn set_stop_in_iboot_stage_2(&mut self, flag: bool) {
+        unsafe { let _: () = msg_send![*self.0, setStopInIBootStage2: flag]; }
+    }
+
+    fn set_force_dfu(&mut self, flag: bool) {
+        unsafe { let _: () = msg_send![*self.0, setForceDFU: flag]; }
     }
 }
 
@@ -186,6 +249,36 @@ impl VZVirtualMachineConfiguration {
         }
     }
 
+    fn set_keyboards<T: VZKeyboardConfiguration>(&mut self, devices: Vec<T>) {
+        let device_ids = devices.iter().map(|x| x.id()).collect();
+        let arr: NSArray<T> = NSArray::array_with_objects(device_ids);
+        unsafe {
+            let _: () = msg_send![*self.0, setKeyboards:*arr.p];
+        }
+    }
+
+    fn set_graphics_devices<T: VZGraphicsDeviceConfiguration>(&mut self, devices: Vec<T>) {
+        let device_ids = devices.iter().map(|x| x.id()).collect();
+        let arr: NSArray<T> = NSArray::array_with_objects(device_ids);
+        unsafe {
+            let _: () = msg_send![*self.0, setGraphicsDevices:*arr.p];
+        }
+    }
+
+    fn set_pointing_devices<T: VZPointingDeviceConfiguration>(&mut self, devices: Vec<T>) {
+        let device_ids = devices.iter().map(|x| x.id()).collect();
+        let arr: NSArray<T> = NSArray::array_with_objects(device_ids);
+        unsafe {
+            let _: () = msg_send![*self.0, setPointingDevices:*arr.p];
+        }
+    }
+
+    fn set_platform(&mut self, platform: impl VZPlatformConfiguration) {
+        unsafe {
+            let _: () = msg_send![*self.0, setPlatform: platform.id()];
+        }
+    }
+
     pub fn validate_with_error(&self) -> Result<BOOL, NSError> {
         unsafe {
             let error = NSError(StrongPtr::new(0 as Id));
@@ -246,6 +339,18 @@ impl VZVirtualMachine {
         }
     }
 
+    pub fn start_with_completion_handler_and_options(&mut self,
+        completion_handler: &Block<(Id,), ()>,
+        options: &VZVirtualMachineStartOptions
+    ) {
+        unsafe {
+            let _: Id = msg_send![*self.0, 
+                startWithOptions: options
+                completionHandler: completion_handler
+            ];
+        }
+    }
+
     pub unsafe fn request_stop_with_error(&mut self) -> Result<bool, NSError> {
         let error = NSError(StrongPtr::new(0 as Id));
         let ret: BOOL = msg_send![*self.0, requestStopWithError:*error.0];
@@ -276,4 +381,19 @@ impl VZVirtualMachine {
             _ => VZVirtualMachineState::Other,
         }
     }
+}
+
+#[test]
+fn should_be_supported() {
+    assert_eq!(true, VZVirtualMachine::supported());
+}
+
+#[test]
+fn start_options_should_work() {
+    let mut opts = VZVirtualMachineStartOptions::new();
+    opts.set_boot_recovery(true);
+    opts.set_force_dfu(true);
+    opts.set_panic_action(true);
+    opts.set_stop_in_iboot_stage_1(true);
+    opts.set_stop_in_iboot_stage_2(true);
 }
