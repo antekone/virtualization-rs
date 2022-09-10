@@ -346,7 +346,7 @@ impl VZVirtualMachine {
     ) {
         unsafe {
             let _: Id = msg_send![*self.0, 
-                startWithOptions: options
+                startWithOptions: *options.0
                 completionHandler: completion_handler
             ];
         }
