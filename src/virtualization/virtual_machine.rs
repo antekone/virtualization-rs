@@ -381,6 +381,10 @@ impl VZVirtualMachine {
             _ => VZVirtualMachineState::Other,
         }
     }
+
+    pub unsafe fn id(&self) -> Id {
+        *self.0
+    }
 }
 
 #[test]

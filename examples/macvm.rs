@@ -22,23 +22,24 @@ fn main() {
         model, machine_id, aux_storage
     );
 
+    let display_config = VZMacGraphicsDisplayConfiguration::new_with_resolution(800, 600);
+
     let config = VZVirtualMachineConfigurationBuilder::new()
         .cpu_count(1)
         .memory_size(1 * 1024 * 1024 * 1024)
         .boot_loader(VZMacOSBootLoader::new())
         .platform(platform)
-        .graphics_devices(vec![VZMacGraphicsDeviceConfiguration::new(vec![VZMacGraphicsDisplayConfiguration::new()])])
+        .graphics_devices(vec![VZMacGraphicsDeviceConfiguration::new(vec![display_config])])
         .pointing_devices(vec![VZUSBScreenCoordinatePointingDeviceConfiguration::new()])
         .build();
 
     let r = config.validate_with_error();
     if let Err(err) = r {
-        println!("Config error");
-        err.dump();
+        println!("Config error: {}", err.localized_description().as_str());
         std::process::exit(1);
     }
 
-    println!("configuration is ok");
+    println!("configuration is ok, starting VM...");
 
     let label = std::ffi::CString::new("second").unwrap();
     let queue = unsafe { dispatch_queue_create(label.as_ptr(), NIL) };

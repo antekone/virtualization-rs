@@ -33,33 +33,24 @@ impl VZMacGraphicsDisplayConfiguration {
     }
 }
 
-pub struct VZMacGraphicsDeviceConfiguration {
-    refs: Vec<VZMacGraphicsDisplayConfiguration>,
-    ptr: StrongPtr
-}
+pub struct VZMacGraphicsDeviceConfiguration(StrongPtr);
 
 impl VZMacGraphicsDeviceConfiguration {
     pub fn new(displays: Vec<VZMacGraphicsDisplayConfiguration>) -> Self {
-        let ptr = unsafe {
-            let g: Id = msg_send![class!(VZMacGraphicsDeviceConfiguration), alloc];
-            StrongPtr::new(msg_send![g, init])
-        };
-
         let id_vec = displays.iter().map(|v| *v.0).collect();
         let ns_array: NSArray<Id> = NSArray::array_with_objects(id_vec);
 
-        unsafe { let _: () = msg_send![*ptr, setDisplays: ns_array]; }
-
-        VZMacGraphicsDeviceConfiguration { 
-            refs: displays,
-            ptr
+        unsafe { 
+            let g: Id = msg_send![class!(VZMacGraphicsDeviceConfiguration), new];
+            let _: () = msg_send![g, setDisplays: *ns_array.p]; 
+            Self(StrongPtr::new(g))
         }
     }
 }
 
 impl VZGraphicsDeviceConfiguration for VZMacGraphicsDeviceConfiguration {
     fn id(&self) -> Id {
-        *self.ptr
+        *self.0
     }
 }
 
