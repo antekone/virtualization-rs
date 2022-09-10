@@ -141,30 +141,30 @@ impl VZVirtualMachineConfigurationBuilder {
 pub struct VZVirtualMachineStartOptions(StrongPtr);
 
 impl VZVirtualMachineStartOptions {
-    fn new() -> Self {
+    pub fn new() -> Self {
         unsafe {
             let obj = msg_send![class!(_VZVirtualMachineStartOptions), new];
             Self(StrongPtr::new(obj))
         }
     }
 
-    fn set_boot_recovery(&mut self, flag: bool) {
+    pub fn set_boot_recovery(&mut self, flag: bool) {
         unsafe { let _: () = msg_send![*self.0, setBootMacOSRecovery: flag]; }
     }
 
-    fn set_panic_action(&mut self, flag: bool) {
+    pub fn set_panic_action(&mut self, flag: bool) {
         unsafe { let _: () = msg_send![*self.0, setPanicAction: flag]; }
     }
 
-    fn set_stop_in_iboot_stage_1(&mut self, flag: bool) {
+    pub fn set_stop_in_iboot_stage_1(&mut self, flag: bool) {
         unsafe { let _: () = msg_send![*self.0, setStopInIBootStage1: flag]; }
     }
 
-    fn set_stop_in_iboot_stage_2(&mut self, flag: bool) {
+    pub fn set_stop_in_iboot_stage_2(&mut self, flag: bool) {
         unsafe { let _: () = msg_send![*self.0, setStopInIBootStage2: flag]; }
     }
 
-    fn set_force_dfu(&mut self, flag: bool) {
+    pub fn set_force_dfu(&mut self, flag: bool) {
         unsafe { let _: () = msg_send![*self.0, setForceDFU: flag]; }
     }
 }
@@ -329,6 +329,7 @@ impl VZVirtualMachine {
         unsafe {
             let i: Id = msg_send![class!(VZVirtualMachine), alloc];
             let p = StrongPtr::new(msg_send![i, initWithConfiguration:*conf.0 queue:queue]);
+            println!("VZVirtualMachine::new() -- p={:?}", *p);
             VZVirtualMachine(p)
         }
     }
